@@ -1,4 +1,4 @@
-const CACHE = 'stretches-v2';
+const CACHE = 'stretches-v3';
 const CORE = [
   './', 'index.html', 'manifest.webmanifest', 'icon-192.png', 'icon-512.png', 'apple-touch-icon.png', 'model.glb',
   'https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js',

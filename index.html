@@ -176,7 +176,7 @@ const Q={};BN.forEach(n=>{if(MB[n])Q[n]=MB[n].quaternion.clone();});
 M.scale.x=s0;return {Q,off:new THREE.Vector3(pv.x-pw.x,0.01-mn,pv.z-pw.z)};}
 function loadModel(){if(!THREE.GLTFLoader)return;
 new THREE.GLTFLoader().load('model.glb',g=>{try{const m=g.scene;
-const skin=new THREE.MeshStandardMaterial({color:0xC4B6A4,roughness:0.62,metalness:0});
+const skin=new THREE.MeshStandardMaterial({color:0xC4B6A4,roughness:0.62,metalness:0,skinning:true});
 m.traverse(o=>{if(o.isBone)MB[o.name]=o;if(o.isMesh){o.frustumCulled=false;if(/hero/i.test(o.name))o.material=skin;else o.visible=false;}});
 if(!MB.pelvis||!MB.thigh_l)return;
 M.add(m);MODEL=m;BN.forEach(n=>{if(MB[n])REST[n]=MB[n].quaternion.clone();});
