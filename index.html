@@ -97,7 +97,7 @@ footer{color:var(--mute);font-size:13px;max-width:1240px;margin:0 auto}
 <div class="cards" id="cards"></div>
 </section>
 <section class="band" style="padding-top:0"><div style="max-width:1240px;margin:0 auto"><h2>Log</h2><div class="meta" id="lgs"></div><ol id="lg" style="list-style:none;padding:0;margin:10px 0 0"></ol></div></section>
-<footer class="band" style="padding-top:0">Hold each stretch at about 6/10 when sore. Stop if you feel sharp pain, pinching or tingling.</footer>
+<footer class="band" style="padding-top:0">Hold each stretch at about 6/10 when sore. Stop if you feel sharp pain, pinching or tingling. <span id="ver" style="opacity:.6">App v4</span></footer>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/GLTFLoader.js"></script>
@@ -176,8 +176,8 @@ const Q={};BN.forEach(n=>{if(MB[n])Q[n]=MB[n].quaternion.clone();});
 M.scale.x=s0;return {Q,off:new THREE.Vector3(pv.x-pw.x,0.01-mn,pv.z-pw.z)};}
 function loadModel(){if(!THREE.GLTFLoader)return;
 new THREE.GLTFLoader().load('model.glb',g=>{try{const m=g.scene;
-const skin=new THREE.MeshStandardMaterial({color:0xC4B6A4,roughness:0.62,metalness:0,skinning:true});
-m.traverse(o=>{if(o.isBone)MB[o.name]=o;if(o.isMesh){o.frustumCulled=false;if(/hero/i.test(o.name))o.material=skin;else o.visible=false;}});
+const skin=new THREE.MeshStandardMaterial({color:0xC4B6A4,roughness:0.62,metalness:0});skin.skinning=true;
+m.traverse(o=>{if(o.isBone)MB[o.name]=o;if(o.isMesh){o.frustumCulled=false;if(/hero/i.test(o.name)){o.material=skin;if(o.isSkinnedMesh)o.material.skinning=true;o.material.needsUpdate=true;}else o.visible=false;}});
 if(!MB.pelvis||!MB.thigh_l)return;
 M.add(m);MODEL=m;BN.forEach(n=>{if(MB[n])REST[n]=MB[n].quaternion.clone();});
 DATA.forEach(s=>s.stretches.forEach(x=>{const r=solve(x.pose);x.pose._Q=r.Q;x.pose._off=r.off;}));
@@ -267,7 +267,7 @@ $('lgs').textContent=L.length?`${streak}-day streak · ${wk.length} session${wk.
 $('lg').innerHTML=L.slice(0,10).map(x=>`<li style="padding:10px 0;border-top:1px solid var(--line);display:flex;justify-content:space-between;gap:12px"><span><b>${esc(x.area)}</b> <span style="color:var(--mute);font-size:14px">${esc(x.names.join(', '))}</span></span><span style="color:var(--mute);font-size:14px;white-space:nowrap">${new Date(x.t).toLocaleDateString(undefined,{day:'numeric',month:'short'})} · ${Math.round(x.secs/60)} min</span></li>`).join('');}
 addEventListener('hashchange',route);
 renderLog();
-if('serviceWorker' in navigator)navigator.serviceWorker.register('sw.js').catch(()=>{});
+if('serviceWorker' in navigator)navigator.serviceWorker.register('sw.js',{updateViaCache:'none'}).catch(()=>{});
 route();size();requestAnimationFrame(loop);loadModel();
 }
 </script>
