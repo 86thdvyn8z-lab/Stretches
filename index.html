@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Stretch library</title>
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<meta name="theme-color" content="#111312">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Stretches">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600&family=Inter:wght@400;500&display=swap" rel="stylesheet">
+<style>
+/* VOICE: calm, coach-like, practical — a mat-side training manual
+   IDEA: a laminated drill card from a combat-sports gym wall
+   PICTURE: a rotatable 3D mannequin holding the stretch, target muscle glowing
+   COLOUR and TYPE: white or near-black ground, ink, coral heat accent; Barlow Condensed + Inter
+   LAYOUT: sticky area tabs, big viewer with timer beside it, stretch cards below */
+:root{color-scheme:light dark;--bg:light-dark(#ffffff,#111312);--ink:light-dark(#151515,#ecebe7);--mute:light-dark(#5d5d58,#a3a29c);--panel:light-dark(#eef0ee,#1b1e1d);--line:light-dark(#d9dbd8,#2c302e);--hot:#d4532b;--hotbg:light-dark(#fbe6de,#3a1e14);--hotink:light-dark(#8a2f12,#f5b49c)}
+:root[data-theme=light]{color-scheme:light}:root[data-theme=dark]{color-scheme:dark}
+*{box-sizing:border-box;min-width:0}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.55 Inter,system-ui,sans-serif;overflow-x:clip}
+h1,h2,h3{font-family:"Barlow Condensed",Inter,sans-serif;font-weight:600;line-height:1.05;margin:0;text-wrap:balance}
+h1{font-size:clamp(32px,6vw,48px)}h2{font-size:28px}h3{font-size:20px}
+.band{padding:clamp(20px,3vw,40px) max(4vw,16px)}
+header p{color:var(--mute);margin:6px 0 0;max-width:60ch}
+nav{position:sticky;top:0;z-index:5;background:var(--bg);border-bottom:1px solid var(--line);padding:10px max(4vw,16px);display:flex;gap:8px;overflow-x:auto}
+nav a{flex:none;text-decoration:none;color:var(--ink);border:1px solid var(--line);border-radius:999px;padding:10px 16px;font-size:15px;min-height:44px;display:flex;align-items:center;gap:8px}
+nav a[aria-current]{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+nav a span{font-size:13px;color:inherit;opacity:.7}
+.main{display:grid;grid-template-columns:minmax(0,1.5fr) minmax(0,1fr);gap:20px;max-width:1240px;margin:0 auto}
+@media(max-width:820px){.main{grid-template-columns:minmax(0,1fr)}}
+.fig{position:relative;min-height:380px;background:var(--panel);border-radius:14px;overflow:hidden}
+.fig canvas{position:absolute;inset:0;width:100%;height:100%;touch-action:none;cursor:grab}
+.hint{position:absolute;left:12px;bottom:10px;font-size:13px;color:var(--mute);pointer-events:none}
+.sidepill{position:absolute;right:12px;top:12px;background:var(--hotbg);color:var(--hotink);font-size:13px;padding:5px 12px;border-radius:999px}
+.tools{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}
+button{font:inherit;font-size:15px;color:var(--ink);background:transparent;border:1px solid var(--line);border-radius:10px;min-height:44px;padding:0 14px;cursor:pointer}
+button:hover{border-color:var(--mute)}button:focus-visible,nav a:focus-visible{outline:2px solid var(--hot);outline-offset:2px}
+button.on{border-color:var(--ink)}
+button.go{background:var(--hot);border-color:var(--hot);color:#fff}
+.panel{display:flex;flex-direction:column;gap:14px}
+.meta{color:var(--mute);font-size:14px;margin-top:4px}
+.timer{display:flex;gap:16px;align-items:center;background:var(--panel);border-radius:14px;padding:14px}
+.timer svg{flex:none}
+#br{font-size:17px;font-weight:500;min-height:26px}
+#pg{font-size:13px;color:var(--mute)}
+ol{margin:0;padding-left:20px}ol li{margin:4px 0}
+.tip{border-left:3px solid var(--hot);padding:4px 0 4px 12px;color:var(--mute);font-size:15px}
+.row{display:flex;align-items:center;gap:10px;font-size:14px;color:var(--mute)}
+.row input{flex:1;accent-color:var(--hot)}
+.cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:12px;max-width:1240px;margin:0 auto}
+.card{text-align:left;padding:14px;border-radius:12px;min-height:88px;display:flex;flex-direction:column;gap:4px;align-items:flex-start}
+.card.on{border:2px solid var(--hot)}
+.card b{font-family:"Barlow Condensed",sans-serif;font-size:20px;font-weight:600}
+.card small{color:var(--mute);font-size:13px}
+.sechead{max-width:1240px;margin:0 auto 12px;display:flex;justify-content:space-between;align-items:end;gap:12px;flex-wrap:wrap}
+footer{color:var(--mute);font-size:13px;max-width:1240px;margin:0 auto}
+@media(prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+</head>
+<body>
+<header class="band" style="padding-bottom:12px">
+<h1>Stretch library</h1>
+<p>Mobility for jiu-jitsu and training, sorted by area. Drag the figure to rotate it. The glowing spot shows where you should feel the stretch.</p>
+</header>
+<nav id="nav" aria-label="Areas"></nav>
+<section class="band">
+<div class="main">
+<div>
+<div class="fig" id="fig"><canvas id="cv" aria-label="3D figure showing the selected stretch"></canvas><span class="sidepill" id="sp">Left side</span><span class="hint">Drag to rotate · pinch or scroll to zoom</span></div>
+<div class="tools">
+<button id="vf">Front</button><button id="vs">Side</button><button id="vt">Top</button>
+<button id="sw">Switch side</button><button id="ar" class="on">Auto-rotate</button>
+</div>
+</div>
+<div class="panel">
+<div><h2 id="nm">Stretch</h2><div class="meta" id="mt"></div></div>
+<div class="timer">
+<svg width="96" height="96" viewBox="0 0 104 104" aria-hidden="true"><circle cx="52" cy="52" r="44" fill="none" stroke="var(--line)" stroke-width="8"/><circle id="rg" cx="52" cy="52" r="44" fill="none" stroke="#d4532b" stroke-width="8" stroke-linecap="round" stroke-dasharray="276.5" stroke-dashoffset="0" transform="rotate(-90 52 52)" style="transition:stroke-dashoffset 1s linear"/><text id="tm" x="52" y="61" text-anchor="middle" style="font:600 28px 'Barlow Condensed',sans-serif;fill:var(--ink)">60</text></svg>
+<div style="flex:1">
+<div id="br">Ready</div><div id="pg"></div>
+<div class="tools" style="margin-top:8px"><button id="go" class="go">Start</button><button id="sk" aria-label="Skip">Skip</button><button id="rs" aria-label="Reset">Reset</button></div>
+</div>
+</div>
+<div class="row"><label for="rd">Rounds per side</label><input type="range" id="rd" min="1" max="3" step="1" value="2"><b id="rdo" style="color:var(--ink)">2</b></div>
+<ol id="cu"></ol>
+<div class="tip" id="tp"></div>
+</div>
+</div>
+</section>
+<section class="band" style="padding-top:0">
+<div class="sechead"><div><h2 id="sh">Area</h2><div class="meta" id="sm"></div></div><button id="all">Play whole area</button></div>
+<div class="cards" id="cards"></div>
+</section>
+<section class="band" style="padding-top:0"><div style="max-width:1240px;margin:0 auto"><h2>Log</h2><div class="meta" id="lgs"></div><ol id="lg" style="list-style:none;padding:0;margin:10px 0 0"></ol></div></section>
+<footer class="band" style="padding-top:0">Hold each stretch at about 6/10 when sore. Stop if you feel sharp pain, pinching or tingling.</footer>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script>
+{
+/* HOW TO ADD: push a stretch into a section's "stretches", or a new section object.
+   pose.j = joint positions in metres (y up, z forward, x to the figure's right), authored with the LEFT side working.
+   pose.tg = list of glow points. sided:false = no left/right (e.g. frog). strap:true draws a strap right hand -> left ankle. */
+const DATA=[
+{id:'outer-hip',name:'Outer hip',sub:'Glute med, glute min, TFL. Sore after guard work, shrimping and framing.',stretches:[
+{name:'90/90 forward lean',hold:75,sided:true,focus:'Glute med, hip rotation',cues:['Front shin across, back knee at 90°','Sit tall, then hinge your chest over the front shin','Lift the back knee for 5 s, then switch sides hands-free'],tip:'Doubles as guard-retention mobility. Keep both sitting bones heavy.',
+pose:{tg:[[-0.17,0.14,-0.02]],j:{pv:[0,0.15,0],nk:[0.03,0.55,0.3],hd:[0.04,0.68,0.4],ls:[-0.15,0.52,0.3],rs:[0.2,0.52,0.32],le:[-0.2,0.3,0.45],re:[0.25,0.3,0.5],lw:[-0.2,0.04,0.62],rw:[0.27,0.04,0.66],lh:[-0.1,0.12,0],rh:[0.1,0.12,0],lk:[-0.1,0.06,0.42],rk:[0.5,0.06,0],la:[0.3,0.05,0.42],ra:[0.5,0.05,-0.4]}}},
+{name:'Sleeping pigeon',hold:90,sided:true,focus:'Deep glutes, outer hip',cues:['Front shin angled, knee pain-free','Square your hips and walk your hands out','Drop to your forearms and sink on each exhale'],tip:'If the front knee complains, bring the heel closer to the groin.',
+pose:{tg:[[-0.18,0.2,-0.02]],j:{pv:[0,0.22,0],nk:[0,0.26,0.5],hd:[0,0.2,0.66],ls:[-0.18,0.24,0.47],rs:[0.18,0.24,0.47],le:[-0.24,0.05,0.56],re:[0.24,0.05,0.56],lw:[-0.18,0.04,0.86],rw:[0.18,0.04,0.86],lh:[-0.1,0.2,0],rh:[0.1,0.2,0],lk:[-0.15,0.06,0.38],rk:[0.12,0.06,-0.45],la:[0.25,0.05,0.42],ra:[0.12,0.05,-0.86]}}},
+{name:'Standing figure-4',hold:50,sided:true,focus:'Glutes, balance',cues:['Ankle over the opposite knee, foot flexed','Sit back as if into a chair','Hinge from the hips with your spine long'],tip:'Hold a wall or rig if balance is limiting the stretch.',
+pose:{tg:[[-0.18,0.82,-0.12]],j:{pv:[0,0.82,-0.1],nk:[0,1.24,0.14],hd:[0,1.37,0.24],ls:[-0.18,1.19,0.12],rs:[0.18,1.19,0.12],le:[-0.16,1.1,0.4],re:[0.16,1.1,0.4],lw:[-0.12,1.06,0.66],rw:[0.12,1.06,0.66],lh:[-0.1,0.8,-0.1],rh:[0.1,0.8,-0.1],lk:[-0.42,0.62,0.15],rk:[0.1,0.45,0.2],la:[0.05,0.5,0.24],ra:[0.1,0.05,0]}}},
+{name:'Supine strap cross-body',hold:60,sided:true,focus:'TFL, IT band area',cues:['Belt around the foot, leg straight','Draw the leg across your body toward the floor','Keep the opposite shoulder pinned down'],tip:'Your BJJ belt works as the strap.',
+pose:{strap:true,tg:[[-0.18,0.12,0]],j:{pv:[0,0.1,0],nk:[0,0.1,-0.5],hd:[0,0.11,-0.66],ls:[-0.2,0.1,-0.45],rs:[0.2,0.1,-0.45],le:[-0.45,0.06,-0.45],re:[0.3,0.3,-0.3],lw:[-0.7,0.05,-0.45],rw:[0.32,0.45,-0.1],lh:[-0.1,0.1,0],rh:[0.1,0.1,0],lk:[0.17,0.35,0.27],rk:[0.1,0.07,0.45],la:[0.45,0.6,0.55],ra:[0.1,0.06,0.85]}}}]},
+{id:'hip-flexors',name:'Hip flexors',sub:'Psoas and rectus femoris. Tight from sitting, running and squatting.',stretches:[
+{name:'Half-kneeling lunge',hold:60,sided:true,focus:'Front of the back hip',cues:['Back knee down on a pad, front foot flat','Tuck your pelvis under and squeeze the back glute','Shift forward and reach the same-side arm up'],tip:'The pelvic tuck does the work. Lunging deeper without it only loads the lower back.',
+pose:{tg:[[-0.1,0.45,0.11]],j:{pv:[0,0.48,0.05],nk:[0,0.95,0.04],hd:[0,1.09,0.06],ls:[-0.18,0.92,0.03],rs:[0.18,0.92,0.03],le:[-0.21,1.18,0.03],re:[0.25,0.72,0.16],lw:[-0.16,1.43,0.06],rw:[0.15,0.5,0.38],lh:[-0.1,0.48,0.05],rh:[0.1,0.48,0.05],lk:[-0.1,0.05,-0.15],rk:[0.12,0.45,0.42],la:[-0.1,0.05,-0.6],ra:[0.12,0.05,0.45]}}}]},
+{id:'groin',name:'Groin',sub:'Adductors. Loaded by closed guard and wide bases.',stretches:[
+{name:'Frog',hold:60,sided:false,focus:'Inner thighs',cues:['Knees wide, ankles in line with knees','Drop to your forearms with a neutral spine','Rock your hips slowly back toward your heels'],tip:'Pad your knees. Progress the width over weeks, not in one session.',
+pose:{tg:[[-0.27,0.22,0.03],[0.27,0.22,0.03]],j:{pv:[0,0.35,0],nk:[0,0.35,0.48],hd:[0,0.33,0.63],ls:[-0.18,0.33,0.45],rs:[0.18,0.33,0.45],le:[-0.2,0.04,0.5],re:[0.2,0.04,0.5],lw:[-0.15,0.04,0.78],rw:[0.15,0.04,0.78],lh:[-0.1,0.35,0],rh:[0.1,0.35,0],lk:[-0.45,0.05,0.05],rk:[0.45,0.05,0.05],la:[-0.45,0.05,-0.4],ra:[0.45,0.05,-0.4]}}}]}
+];
+
+const $=i=>document.getElementById(i);
+const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+let si=0,sti=0,side='left',Q=[],qi=0,rem=0,el=0,run=false,phase='hold',timer=null,rounds=2;
+try{rounds=+(localStorage.getItem('rounds')||2)}catch(e){}
+$('rd').value=rounds;$('rdo').textContent=rounds;
+
+/* 3D */
+const cv=$('cv'),fig=$('fig');
+const R=new THREE.WebGLRenderer({canvas:cv,antialias:true,alpha:true});R.setPixelRatio(Math.min(devicePixelRatio,2));
+const sc=new THREE.Scene(),cam=new THREE.PerspectiveCamera(40,1,0.05,50);
+sc.add(new THREE.HemisphereLight(0xffffff,0x777777,0.9));const dl=new THREE.DirectionalLight(0xffffff,0.7);dl.position.set(2,3,2);sc.add(dl);
+const fl=new THREE.Mesh(new THREE.CircleGeometry(1.4,48),new THREE.MeshStandardMaterial({color:0x888780,transparent:true,opacity:0.18}));fl.rotation.x=-Math.PI/2;sc.add(fl);
+const gr=new THREE.GridHelper(2.8,14,0x888780,0x888780);gr.material.transparent=true;gr.material.opacity=0.25;sc.add(gr);
+const G=new THREE.Group();sc.add(G);
+const B=[['pv','nk',0.085],['ls','rs',0.05],['lh','rh',0.06],['ls','le',0.045],['le','lw',0.04],['rs','re',0.045],['re','rw',0.04],['lh','lk',0.065],['lk','la',0.05],['rh','rk',0.065],['rk','ra',0.05],['nk','hd',0.035]];
+const K=['pv','nk','hd','ls','rs','le','re','lw','rw','lh','rh','lk','rk','la','ra'];
+const bm=new THREE.MeshStandardMaterial({color:0xB9B6AD,roughness:0.6}),jm=new THREE.MeshStandardMaterial({color:0x888780,roughness:0.5});
+const cyl=new THREE.CylinderGeometry(1,1,1,16),sph=new THREE.SphereGeometry(1,20,16);
+const bones=B.map(()=>{const m=new THREE.Mesh(cyl,bm);G.add(m);return m;});
+const joints={};K.forEach(k=>{const m=new THREE.Mesh(sph,k==='hd'?bm:jm);m.scale.setScalar(k==='hd'?0.11:k==='pv'?0.09:0.05);G.add(m);joints[k]=m;});
+const tmat=new THREE.MeshStandardMaterial({color:0xD4532B,emissive:0xD4532B,emissiveIntensity:0.4,transparent:true,opacity:0.78});
+const tms=[0,1].map(()=>{const m=new THREE.Mesh(sph,tmat);G.add(m);return m;});
+const strap=new THREE.Mesh(cyl,new THREE.MeshStandardMaterial({color:0xBA7517}));G.add(strap);
+const up=new THREE.Vector3(0,1,0);
+let pose=DATA[0].stretches[0].pose,cur={},tcur=[new THREE.Vector3(),new THREE.Vector3()],mir=1,sx=1,auto=true,th=0.7,ph=1.15,dist=2.6;
+K.forEach(k=>cur[k]=new THREE.Vector3(...pose.j[k]));
+function link(m,a,b,r){const d=new THREE.Vector3().subVectors(b,a),L=d.length();m.position.copy(a).addScaledVector(d,0.5);m.scale.set(r,L,r);m.quaternion.setFromUnitVectors(up,d.normalize());}
+function size(){const w=fig.clientWidth,h=fig.clientHeight;R.setSize(w,h,false);cam.aspect=w/h;cam.updateProjectionMatrix();}
+const ro=new ResizeObserver(size);ro.observe(fig);
+const pts=new Map();let pd=0;
+cv.addEventListener('pointerdown',e=>{cv.setPointerCapture(e.pointerId);pts.set(e.pointerId,[e.clientX,e.clientY]);setAuto(false);});
+cv.addEventListener('pointermove',e=>{if(!pts.has(e.pointerId))return;const p=pts.get(e.pointerId);
+if(pts.size===1){th-=(e.clientX-p[0])*0.01;ph=Math.min(1.55,Math.max(0.1,ph-(e.clientY-p[1])*0.01));}
+pts.set(e.pointerId,[e.clientX,e.clientY]);
+if(pts.size===2){const [a,b]=[...pts.values()],d=Math.hypot(a[0]-b[0],a[1]-b[1]);if(pd)dist=Math.min(5,Math.max(1.2,dist*pd/d));pd=d;}});
+const endp=e=>{pts.delete(e.pointerId);pd=0;};cv.addEventListener('pointerup',endp);cv.addEventListener('pointercancel',endp);
+cv.addEventListener('wheel',e=>{e.preventDefault();dist=Math.min(5,Math.max(1.2,dist*(1+e.deltaY*0.001)));},{passive:false});
+function setAuto(v){auto=v;$('ar').classList.toggle('on',v);}
+$('ar').onclick=()=>setAuto(!auto);
+$('vf').onclick=()=>{th=0;ph=1.3;setAuto(false);};
+$('vs').onclick=()=>{th=Math.PI/2;ph=1.4;setAuto(false);};
+$('vt').onclick=()=>{th=0.001;ph=0.12;setAuto(false);};
+let t0=performance.now();
+function loop(t){const dt=Math.min(0.05,(t-t0)/1000);t0=t;const k=1-Math.pow(0.02,dt);
+K.forEach(n=>{cur[n].lerp(new THREE.Vector3(...pose.j[n]),k);joints[n].position.copy(cur[n]);});
+B.forEach((b,i)=>link(bones[i],cur[b[0]],cur[b[1]],b[2]));
+let pu;if(run&&phase==='hold'){pu=(el%10)>=4?1:0;}else pu=0.5+0.5*Math.sin(t/1000*Math.PI*0.4);
+tmat.emissiveIntensity+=((0.2+0.6*pu)-tmat.emissiveIntensity)*k*0.5;
+tms.forEach((m,i)=>{const g=pose.tg[i];m.visible=!!g;if(!g)return;tcur[i].lerp(new THREE.Vector3(...g),k);m.position.copy(tcur[i]);const s=1+0.2*tmat.emissiveIntensity;m.scale.set(0.08*s,0.1*s,0.11*s);});
+strap.visible=!!pose.strap;if(strap.visible)link(strap,cur.rw,cur.la,0.012);
+sx+=(mir-sx)*k;G.scale.x=sx;
+if(auto)th+=dt*0.35;
+cam.position.set(dist*Math.sin(ph)*Math.sin(th),0.45+dist*Math.cos(ph),dist*Math.sin(ph)*Math.cos(th));cam.lookAt(0,0.45,0);
+R.render(sc,cam);requestAnimationFrame(loop);}
+
+/* UI */
+function nav(){$('nav').innerHTML=DATA.map((s,i)=>`<a href="#${esc(s.id)}"${i===si?' aria-current="page"':''}>${esc(s.name)} <span>${s.stretches.length}</span></a>`).join('');}
+function cards(){const s=DATA[si];$('sh').textContent=s.name;$('sm').textContent=s.sub;
+$('cards').innerHTML=s.stretches.map((x,i)=>`<button class="card${i===sti?' on':''}" data-i="${i}"><b>${esc(x.name)}</b><small>${esc(x.focus)} · ${x.hold} s${x.sided?' each side':''}</small></button>`).join('');
+$('cards').querySelectorAll('.card').forEach(b=>b.onclick=()=>{stop();sti=+b.dataset.i;queue(false);});}
+function show(st,sd){const x=DATA[si].stretches[st];sti=st;pose=x.pose;side=sd;
+mir=sd==='right'?-1:1;$('sp').textContent=x.sided?(sd==='right'?'Right side':'Left side'):'Both sides';$('sw').style.display=x.sided?'':'none';
+$('nm').textContent=x.name;$('mt').textContent=`${x.focus} · hold ${x.hold} s${x.sided?' each side':''}`;
+$('cu').innerHTML=x.cues.map(c=>`<li>${esc(c)}</li>`).join('');$('tp').textContent=x.tip||'';
+$('cards').querySelectorAll('.card').forEach((b,i)=>b.classList.toggle('on',i===st));}
+function queue(all){Q=[];const s=DATA[si];(all?s.stretches.map((_,i)=>i):[sti]).forEach(i=>{const x=s.stretches[i];for(let r=0;r<rounds;r++)(x.sided?['left','right']:['both']).forEach(sd=>Q.push({i,sd}));});
+qi=0;phase='hold';load();}
+function load(){const q=Q[qi];show(q.i,q.sd==='both'?'left':q.sd);rem=DATA[si].stretches[q.i].hold;el=0;draw();}
+function draw(){const tot=phase==='hold'?DATA[si].stretches[Q[qi].i].hold:5;$('tm').textContent=Math.max(0,Math.round(rem));
+$('rg').style.strokeDashoffset=(276.5*(1-rem/tot)).toFixed(1);$('rg').setAttribute('stroke',phase==='hold'?'#d4532b':'#7a8a86');
+const q=Q[qi],nx=Q[qi+1];
+$('pg').textContent=`Step ${qi+1} of ${Q.length}`+(q.sd!=='both'?` · ${q.sd} side`:'');
+if(phase==='switch')$('br').textContent=nx&&nx.i===q.i?'Switch sides':'Next: '+(nx?DATA[si].stretches[nx.i].name:'');
+else if(!run)$('br').textContent=rem===DATA[si].stretches[q.i].hold?'Ready':'Paused';
+else $('br').textContent=(el%10)>=4?'Breathe out, sink deeper':'Breathe in';}
+function tick(){rem--;el++;
+if(rem<=0){if(phase==='hold'){if(qi>=Q.length-1){stop();$('br').textContent='Done. Nice work.';logIt();return;}phase='switch';rem=5;}
+else{phase='hold';qi++;load();return;}}
+draw();}
+function start(){run=true;$('go').textContent='Pause';clearInterval(timer);timer=setInterval(tick,1000);draw();}
+function stop(){run=false;clearInterval(timer);$('go').textContent='Start';if(Q.length)draw();}
+$('go').onclick=()=>run?stop():start();
+$('sk').onclick=()=>{if(qi<Q.length-1){phase='hold';qi++;load();}};
+$('rs').onclick=()=>{stop();qi=0;phase='hold';load();};
+$('all').onclick=()=>{stop();queue(true);start();};
+$('sw').onclick=()=>{const x=DATA[si].stretches[sti];if(!x.sided)return;const n=side==='left'?'right':'left';const j=Q.findIndex((q,k)=>k>=0&&q.i===sti&&q.sd===n);if(j>=0){qi=j;phase='hold';load();}else show(sti,n);};
+$('rd').oninput=()=>{rounds=+$('rd').value;$('rdo').textContent=rounds;try{localStorage.setItem('rounds',rounds)}catch(e){};stop();queue(false);};
+function route(){const id=location.hash.slice(1);const i=DATA.findIndex(s=>s.id===id);si=i>=0?i:0;sti=0;stop();nav();cards();queue(false);}
+function getLog(){try{return JSON.parse(localStorage.getItem('log')||'[]')}catch(e){return []}}
+function logIt(){const names=[...new Set(Q.map(q=>DATA[si].stretches[q.i].name))];const secs=Q.reduce((a,q)=>a+DATA[si].stretches[q.i].hold,0);
+const L=getLog();L.unshift({t:Date.now(),area:DATA[si].name,names,secs});try{localStorage.setItem('log',JSON.stringify(L.slice(0,200)))}catch(e){}renderLog();}
+function renderLog(){const L=getLog(),day=t=>new Date(t).toDateString();
+const days=new Set(L.map(x=>day(x.t)));let streak=0,d=new Date();if(!days.has(d.toDateString()))d.setDate(d.getDate()-1);while(days.has(d.toDateString())){streak++;d.setDate(d.getDate()-1);}
+const wk=L.filter(x=>Date.now()-x.t<7*864e5);
+$('lgs').textContent=L.length?`${streak}-day streak · ${wk.length} session${wk.length===1?'':'s'} this week · ${Math.round(wk.reduce((a,x)=>a+x.secs,0)/60)} min holding`:'Finish a session and it shows up here. Saved on this device only.';
+$('lg').innerHTML=L.slice(0,10).map(x=>`<li style="padding:10px 0;border-top:1px solid var(--line);display:flex;justify-content:space-between;gap:12px"><span><b>${esc(x.area)}</b> <span style="color:var(--mute);font-size:14px">${esc(x.names.join(', '))}</span></span><span style="color:var(--mute);font-size:14px;white-space:nowrap">${new Date(x.t).toLocaleDateString(undefined,{day:'numeric',month:'short'})} · ${Math.round(x.secs/60)} min</span></li>`).join('');}
+addEventListener('hashchange',route);
+renderLog();
+if('serviceWorker' in navigator)navigator.serviceWorker.register('sw.js').catch(()=>{});
+route();size();requestAnimationFrame(loop);
+}
+</script>
+</body>
+</html>
