@@ -100,6 +100,7 @@ footer{color:var(--mute);font-size:13px;max-width:1240px;margin:0 auto}
 <footer class="band" style="padding-top:0">Hold each stretch at about 6/10 when sore. Stop if you feel sharp pain, pinching or tingling.</footer>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/GLTFLoader.js"></script>
 <script>
 {
 /* HOW TO ADD: push a stretch into a section's "stretches", or a new section object.
@@ -117,7 +118,7 @@ pose:{tg:[[-0.18,0.82,-0.12]],j:{pv:[0,0.82,-0.1],nk:[0,1.24,0.14],hd:[0,1.37,0.
 pose:{strap:true,tg:[[-0.18,0.12,0]],j:{pv:[0,0.1,0],nk:[0,0.1,-0.5],hd:[0,0.11,-0.66],ls:[-0.2,0.1,-0.45],rs:[0.2,0.1,-0.45],le:[-0.45,0.06,-0.45],re:[0.3,0.3,-0.3],lw:[-0.7,0.05,-0.45],rw:[0.32,0.45,-0.1],lh:[-0.1,0.1,0],rh:[0.1,0.1,0],lk:[0.17,0.35,0.27],rk:[0.1,0.07,0.45],la:[0.45,0.6,0.55],ra:[0.1,0.06,0.85]}}}]},
 {id:'hip-flexors',name:'Hip flexors',sub:'Psoas and rectus femoris. Tight from sitting, running and squatting.',stretches:[
 {name:'Half-kneeling lunge',hold:60,sided:true,focus:'Front of the back hip',cues:['Back knee down on a pad, front foot flat','Tuck your pelvis under and squeeze the back glute','Shift forward and reach the same-side arm up'],tip:'The pelvic tuck does the work. Lunging deeper without it only loads the lower back.',
-pose:{tg:[[-0.1,0.45,0.11]],j:{pv:[0,0.48,0.05],nk:[0,0.95,0.04],hd:[0,1.09,0.06],ls:[-0.18,0.92,0.03],rs:[0.18,0.92,0.03],le:[-0.21,1.18,0.03],re:[0.25,0.72,0.16],lw:[-0.16,1.43,0.06],rw:[0.15,0.5,0.38],lh:[-0.1,0.48,0.05],rh:[0.1,0.48,0.05],lk:[-0.1,0.05,-0.15],rk:[0.12,0.45,0.42],la:[-0.1,0.05,-0.6],ra:[0.12,0.05,0.45]}}}]},
+pose:{tg:[[-0.1,0.44,0.11]],j:{pv:[0,0.47,0.05],nk:[0,0.94,0.04],hd:[0,1.08,0.06],ls:[-0.18,0.91,0.03],rs:[0.18,0.91,0.03],le:[-0.21,1.17,0.03],re:[0.25,0.7,0.2],lw:[-0.16,1.42,0.06],rw:[0.15,0.49,0.44],lh:[-0.1,0.47,0.05],rh:[0.12,0.47,0.05],lk:[-0.1,0.06,-0.08],rk:[0.12,0.45,0.48],la:[-0.1,0.05,-0.55],ra:[0.12,0.07,0.22]}}}]},
 {id:'groin',name:'Groin',sub:'Adductors. Loaded by closed guard and wide bases.',stretches:[
 {name:'Frog',hold:60,sided:false,focus:'Inner thighs',cues:['Knees wide, ankles in line with knees','Drop to your forearms with a neutral spine','Rock your hips slowly back toward your heels'],tip:'Pad your knees. Progress the width over weeks, not in one session.',
 pose:{tg:[[-0.27,0.22,0.03],[0.27,0.22,0.03]],j:{pv:[0,0.35,0],nk:[0,0.35,0.48],hd:[0,0.33,0.63],ls:[-0.18,0.33,0.45],rs:[0.18,0.33,0.45],le:[-0.2,0.04,0.5],re:[0.2,0.04,0.5],lw:[-0.15,0.04,0.78],rw:[0.15,0.04,0.78],lh:[-0.1,0.35,0],rh:[0.1,0.35,0],lk:[-0.45,0.05,0.05],rk:[0.45,0.05,0.05],la:[-0.45,0.05,-0.4],ra:[0.45,0.05,-0.4]}}}]}
@@ -147,6 +148,42 @@ const tmat=new THREE.MeshStandardMaterial({color:0xD4532B,emissive:0xD4532B,emis
 const tms=[0,1].map(()=>{const m=new THREE.Mesh(sph,tmat);G.add(m);return m;});
 const strap=new THREE.Mesh(cyl,new THREE.MeshStandardMaterial({color:0xBA7517}));G.add(strap);
 const up=new THREE.Vector3(0,1,0);
+/* Realistic body: CC0 "Universal Base Characters" by Quaternius, posed by aiming its skeleton at the same joint data */
+const M=new THREE.Group();sc.add(M);let MODEL=null;const MB={},REST={};
+const BN=['pelvis','spine_01','spine_02','spine_03','neck_01','Head','thigh_l','calf_l','foot_l','ball_l','thigh_r','calf_r','foot_r','ball_r','upperarm_l','lowerarm_l','hand_l','upperarm_r','lowerarm_r','hand_r'];
+const CH={spine_01:'spine_02',spine_02:'spine_03',spine_03:'neck_01',neck_01:'Head',thigh_l:'calf_l',calf_l:'foot_l',thigh_r:'calf_r',calf_r:'foot_r',upperarm_l:'lowerarm_l',lowerarm_l:'hand_l',upperarm_r:'lowerarm_r',lowerarm_r:'hand_r'};
+const AIM=[['spine_01','pv','nk'],['spine_02','pv','nk'],['spine_03','pv','nk'],['neck_01','nk','hd'],['thigh_l','lh','lk'],['calf_l','lk','la'],['thigh_r','rh','rk'],['calf_r','rk','ra'],['upperarm_l','ls','le'],['lowerarm_l','le','lw'],['upperarm_r','rs','re'],['lowerarm_r','re','rw']];
+/* glow targets on the body: [bone, distance along bone, sideways (+ = figure's left), forward] */
+const TB={'90/90 forward lean':[['thigh_l',0.06,0.1,-0.02]],'Sleeping pigeon':[['thigh_l',0.06,0.1,-0.02]],'Standing figure-4':[['thigh_l',0.06,0.1,-0.03]],'Supine strap cross-body':[['thigh_l',0.08,0.1,0]],'Half-kneeling lunge':[['thigh_l',0.08,0.02,0.09]],'Frog':[['thigh_l',0.18,-0.06,0],['thigh_r',0.18,0.06,0]]};
+const RAD={foot_l:0.08,foot_r:0.08,ball_l:0.02,ball_r:0.02,calf_l:0.06,calf_r:0.06,hand_l:0.03,hand_r:0.03,lowerarm_l:0.04,lowerarm_r:0.04,Head:0.1,pelvis:0.12};
+const V=()=>new THREE.Vector3(),Qt=()=>new THREE.Quaternion();
+const wp=n=>MB[n].getWorldPosition(V());
+const lp=n=>M.worldToLocal(wp(n));
+function rotW(b,q){const pw=b.parent.getWorldQuaternion(Qt()),bw=b.getWorldQuaternion(Qt());b.quaternion.copy(pw.invert().multiply(q.clone().multiply(bw)));b.updateMatrixWorld(true);}
+function solve(p){
+const J=k=>{const v=p.j[k];return new THREE.Vector3(-v[0],v[1],v[2]);};
+BN.forEach(n=>{if(MB[n])MB[n].quaternion.copy(REST[n]);});
+MODEL.position.set(0,0,0);const s0=M.scale.x;M.scale.x=1;M.updateMatrixWorld(true);
+const X=J('lh').sub(J('rh')).normalize(),Y=J('nk').sub(J('pv'));Y.addScaledVector(X,-Y.dot(X)).normalize();const Z=V().crossVectors(X,Y);
+const rX=wp('thigh_l').sub(wp('thigh_r')).normalize(),rY=wp('neck_01').sub(wp('pelvis'));rY.addScaledVector(rX,-rY.dot(rX)).normalize();const rZ=V().crossVectors(rX,rY);
+const qa=Qt().setFromRotationMatrix(new THREE.Matrix4().makeBasis(X,Y,Z)),qr=Qt().setFromRotationMatrix(new THREE.Matrix4().makeBasis(rX,rY,rZ));
+rotW(MB.pelvis,qa.multiply(qr.invert()));
+AIM.forEach(([b,f,t])=>{if(!MB[b]||!MB[CH[b]])return;const d0=wp(CH[b]).sub(wp(b)).normalize(),d1=J(t).sub(J(f)).normalize();rotW(MB[b],Qt().setFromUnitVectors(d0,d1));});
+['foot_l','foot_r'].forEach(f=>{const b=f.replace('foot','ball');if(!MB[f]||!MB[b])return;const d0=wp(b).sub(wp(f)),d1=d0.clone();d1.y=0;if(d1.length()<0.03){d1.copy(wp(f).sub(wp(f.replace('foot','calf'))));d1.y=0;}if(d1.length()<1e-3)return;rotW(MB[f],Qt().setFromUnitVectors(d0.normalize(),d1.normalize()));});
+let mn=1e9;Object.keys(RAD).forEach(n=>{if(MB[n])mn=Math.min(mn,wp(n).y-RAD[n]);});
+const pw=wp('pelvis'),pv=J('pv');
+const Q={};BN.forEach(n=>{if(MB[n])Q[n]=MB[n].quaternion.clone();});
+M.scale.x=s0;return {Q,off:new THREE.Vector3(pv.x-pw.x,0.01-mn,pv.z-pw.z)};}
+function loadModel(){if(!THREE.GLTFLoader)return;
+new THREE.GLTFLoader().load('model.glb',g=>{try{const m=g.scene;
+const skin=new THREE.MeshStandardMaterial({color:0xC4B6A4,roughness:0.62,metalness:0});
+m.traverse(o=>{if(o.isBone)MB[o.name]=o;if(o.isMesh){o.frustumCulled=false;if(/hero/i.test(o.name))o.material=skin;else o.visible=false;}});
+if(!MB.pelvis||!MB.thigh_l)return;
+M.add(m);MODEL=m;BN.forEach(n=>{if(MB[n])REST[n]=MB[n].quaternion.clone();});
+DATA.forEach(s=>s.stretches.forEach(x=>{const r=solve(x.pose);x.pose._Q=r.Q;x.pose._off=r.off;}));
+BN.forEach(n=>{if(MB[n])MB[n].quaternion.copy(pose._Q[n]);});m.position.copy(pose._off);
+G.visible=false;tms.forEach(t=>M.add(t));M.add(strap);
+}catch(e){MODEL=null;G.visible=true;}},undefined,()=>{});}
 let pose=DATA[0].stretches[0].pose,cur={},tcur=[new THREE.Vector3(),new THREE.Vector3()],mir=1,sx=1,auto=true,th=0.7,ph=1.15,dist=2.6;
 K.forEach(k=>cur[k]=new THREE.Vector3(...pose.j[k]));
 function link(m,a,b,r){const d=new THREE.Vector3().subVectors(b,a),L=d.length();m.position.copy(a).addScaledVector(d,0.5);m.scale.set(r,L,r);m.quaternion.setFromUnitVectors(up,d.normalize());}
@@ -171,9 +208,18 @@ K.forEach(n=>{cur[n].lerp(new THREE.Vector3(...pose.j[n]),k);joints[n].position.
 B.forEach((b,i)=>link(bones[i],cur[b[0]],cur[b[1]],b[2]));
 let pu;if(run&&phase==='hold'){pu=(el%10)>=4?1:0;}else pu=0.5+0.5*Math.sin(t/1000*Math.PI*0.4);
 tmat.emissiveIntensity+=((0.2+0.6*pu)-tmat.emissiveIntensity)*k*0.5;
+sx+=(mir-sx)*k;
+if(MODEL&&pose._Q){
+BN.forEach(n=>{if(MB[n])MB[n].quaternion.slerp(pose._Q[n],k);});MODEL.position.lerp(pose._off,k);
+M.scale.x=sx;M.updateMatrixWorld(true);
+const lat=lp('thigh_l').sub(lp('thigh_r')).normalize(),upv=lp('spine_03').sub(lp('pelvis')).normalize(),fw=V().crossVectors(lat,upv).normalize();
+const T=TB[DATA[si].stretches[sti].name]||[];
+tms.forEach((m,i)=>{const g=T[i];m.visible=!!g;if(!g)return;const b=lp(g[0]),c=lp(CH[g[0]]);const p=b.clone().addScaledVector(c.sub(b).normalize(),g[1]).addScaledVector(lat,g[2]).addScaledVector(fw,g[3]);m.position.copy(p);const s=0.9+0.3*tmat.emissiveIntensity;m.scale.set(0.07*s,0.08*s,0.07*s);});
+strap.visible=!!pose.strap;if(strap.visible)link(strap,lp('hand_r'),lp('foot_l'),0.01);
+}else{
 tms.forEach((m,i)=>{const g=pose.tg[i];m.visible=!!g;if(!g)return;tcur[i].lerp(new THREE.Vector3(...g),k);m.position.copy(tcur[i]);const s=1+0.2*tmat.emissiveIntensity;m.scale.set(0.08*s,0.1*s,0.11*s);});
 strap.visible=!!pose.strap;if(strap.visible)link(strap,cur.rw,cur.la,0.012);
-sx+=(mir-sx)*k;G.scale.x=sx;
+G.scale.x=sx;}
 if(auto)th+=dt*0.35;
 cam.position.set(dist*Math.sin(ph)*Math.sin(th),0.45+dist*Math.cos(ph),dist*Math.sin(ph)*Math.cos(th));cam.lookAt(0,0.45,0);
 R.render(sc,cam);requestAnimationFrame(loop);}
@@ -222,7 +268,7 @@ $('lg').innerHTML=L.slice(0,10).map(x=>`<li style="padding:10px 0;border-top:1px
 addEventListener('hashchange',route);
 renderLog();
 if('serviceWorker' in navigator)navigator.serviceWorker.register('sw.js').catch(()=>{});
-route();size();requestAnimationFrame(loop);
+route();size();requestAnimationFrame(loop);loadModel();
 }
 </script>
 </body>

@@ -1,11 +1,15 @@
-const CACHE = 'stretches-v1';
+const CACHE = 'stretches-v2';
 const CORE = [
-  './', 'index.html', 'manifest.webmanifest', 'icon-192.png', 'icon-512.png', 'apple-touch-icon.png',
-  'https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js'
+  './', 'index.html', 'manifest.webmanifest', 'icon-192.png', 'icon-512.png', 'apple-touch-icon.png', 'model.glb',
+  'https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js',
+  'https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/GLTFLoader.js'
 ];
 
 self.addEventListener('install', e => {
-  e.waitUntil(caches.open(CACHE).then(c => c.addAll(CORE)).then(() => self.skipWaiting()));
+  // Each file is cached on its own, so one failed download can't block offline use of the rest.
+  e.waitUntil(caches.open(CACHE)
+    .then(c => Promise.all(CORE.map(u => c.add(u).catch(() => {}))))
+    .then(() => self.skipWaiting()));
 });
 
 self.addEventListener('activate', e => {
