@@ -1,4 +1,4 @@
-const CACHE = 'stretches-v5';
+const CACHE = 'stretches-v6';
 const LOCAL = ['./', 'index.html', 'manifest.webmanifest', 'icon-192.png', 'icon-512.png', 'apple-touch-icon.png', 'model.glb'];
 const CDN = [
   'https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js',
